@@ -1,5 +1,7 @@
 package org.organet.michael.Connectivity;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.organet.michael.Connectivity.Messages.AdhocMessage;
 
 import java.io.IOException;
@@ -8,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Manager {
+  private static final Logger logger = LogManager.getLogger(Manager.class.getName());
+
   private static Listener listener = new Listener();
   private static List<Node> nodes = new ArrayList<>();
 
@@ -16,7 +20,7 @@ public class Manager {
     try {
       newNode = new Node(nodeSocket);
     } catch (IOException e) {
-      System.out.println("Warning: Could not create new Node.");
+      logger.warn("Could not create new Node.");
 
       return false;
     }
@@ -74,7 +78,7 @@ public class Manager {
     try {
       nodes.get(targetNodeIndex).disconnect();
     } catch (IOException e) {
-      System.out.println("Error: Could not disconnect from node.");
+      logger.error("Could not disconnect from node.");
 
       return false;
     }

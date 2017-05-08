@@ -1,5 +1,7 @@
 package org.organet.michael;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.organet.michael.Connectivity.Helper;
 import org.organet.michael.Connectivity.Manager;
 
@@ -8,6 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class App {
+  private static final Logger logger = LogManager.getLogger(App.class.getName());
+
   public static final int APP_PORT = 5169;
   static final String deviceID = calculateDeviceID();
 
@@ -15,7 +19,7 @@ public class App {
 
   public static void main(String[] args) {
     if (args.length < 1) {
-      System.out.println("Shared directory path is missing, first argument must be a valid path. Terminating...");
+      logger.fatal("Shared directory path is missing, first argument must be a valid path. Terminating...");
 
       return;
     }

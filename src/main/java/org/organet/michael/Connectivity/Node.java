@@ -1,5 +1,7 @@
 package org.organet.michael.Connectivity;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.organet.michael.Connectivity.Messages.AdhocMessage;
 import org.organet.michael.Connectivity.Messages.MessageDomains;
 import org.organet.michael.Connectivity.Messages.NODE.*;
@@ -8,6 +10,8 @@ import java.io.*;
 import java.net.Socket;
 
 public class Node implements Runnable {
+  private static final Logger logger = LogManager.getLogger(Node.class.getName());
+
   private Socket socket;
   private BufferedReader inlet;
   private OutputStream outlet;
@@ -48,10 +52,10 @@ public class Node implements Runnable {
           // Assign random device id (0-100) to remove this very node from the manager's list
           deviceID = String.valueOf((int) Math.floor(Math.random() * 101));
           Manager.disconnectFrom(deviceID);
-          System.out.println("Warning: Node was disconnected due to lack of information.");
+          logger.warn("Node was disconnected due to lack of information.");
         } else {
           deviceID = line.split(AdhocMessage.PART_SEPARATOR)[2];
-          System.out.println("Info: Node device identifier acquired: " + deviceID);
+          logger.info("Node device identifier acquired: " + deviceID);
         }
       } else {
         Manager.processMessage(deviceID, line);
@@ -68,7 +72,7 @@ public class Node implements Runnable {
       outlet.write(String.valueOf(message + "\n\r").getBytes());
       outlet.flush();
     } catch (IOException e) {
-      System.out.println("Warning: Could not send the message to node.");
+      logger.warn("Could not send the message to node.");
     }
   }
 

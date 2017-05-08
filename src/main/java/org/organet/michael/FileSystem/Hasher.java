@@ -1,5 +1,8 @@
 package org.organet.michael.FileSystem;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -7,6 +10,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class Hasher {
+  private static final Logger logger = LogManager.getLogger(Hasher.class.getName());
+
   public static String calculateFileHash(String path) throws NoSuchAlgorithmException {
     FileInputStream fis;
     try {

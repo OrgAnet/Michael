@@ -1,10 +1,15 @@
 package org.organet.michael.Connectivity;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.net.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Helper {
+  private static final Logger logger = LogManager.getLogger(Helper.class.getName());
+
   private static final NetworkInterface adhocInterface;
   private static final byte[] rawMACAddress; // The MAC address of the ad-hoc network interface card
   private static final Inet4Address rawIPAddress; // The IP address of this very node on the ad-hoc network
@@ -31,7 +36,7 @@ public class Helper {
     try {
       interfaces = NetworkInterface.getNetworkInterfaces();
     } catch (SocketException e) {
-      System.out.println("ERROR: Could not get network interfaces. Terminating...");
+      logger.fatal("Could not get network interfaces. Terminating...");
 
       System.exit(1);
       return null;
@@ -71,7 +76,7 @@ public class Helper {
     }
 
     if (adhocInterfaceCandidates.isEmpty()) {
-      System.out.println("Warning: There is no ad-hoc network interface found. Terminating...");
+      logger.fatal("There is no ad-hoc network interface found. Terminating...");
 
       System.exit(2);
       return null;
@@ -113,7 +118,7 @@ public class Helper {
     try {
       return adhocInterface.getHardwareAddress();
     } catch (SocketException e) {
-      System.out.println("ERROR: Could not get MAC address of the ad-hoc network interface. Terminating...");
+      logger.fatal("Could not get MAC address of the ad-hoc network interface. Terminating...");
 
       System.exit(3);
       return null;
@@ -172,7 +177,7 @@ public class Helper {
     return macAddress;
   }
 
-  public static String getIPAddress() {
+  static String getIPAddress() {
     return ipAddress;
   }
 

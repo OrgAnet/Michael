@@ -1,5 +1,8 @@
 package org.organet.michael.FileSystem;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -10,6 +13,8 @@ import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.*;
 
 public class Watcher implements Runnable {
+  private static final Logger logger = LogManager.getLogger(Watcher.class.getName());
+
   private final WatchService watcher;
   private final Map<WatchKey, Path> keys;
 
@@ -45,10 +50,10 @@ public class Watcher implements Runnable {
     Path prev = keys.get(key);
     if (prev == null) {
       // TODO Continue formatting printed text
-      System.out.format("register: %s\n", dir);
+      logger.info("Register: %s\n", dir);
     } else {
       if (!dir.equals(prev)) {
-        System.out.format("update: %s -> %s\n", prev, dir);
+        logger.info("Update: %s -> %s\n", prev, dir);
       }
     }
 

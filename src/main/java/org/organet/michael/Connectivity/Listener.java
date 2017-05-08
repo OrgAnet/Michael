@@ -1,5 +1,7 @@
 package org.organet.michael.Connectivity;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.organet.michael.App;
 
 import java.io.IOException;
@@ -8,15 +10,19 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Listener implements Runnable {
+  private static final Logger logger = LogManager.getLogger(Listener.class.getName());
+
   private final ServerSocket serverSocket;
 
   Listener() {
+    logger.info(String.format("Listening on %s:%s", Helper.getIPAddress(), App.APP_PORT));
+
     ServerSocket tempSocket;
     try {
       tempSocket = new ServerSocket(App.APP_PORT, 50, InetAddress.getByName(Helper.getIPAddress()));
 //      tempSocket = new ServerSocket(App.APP_PORT);
     } catch (IOException e) {
-      System.out.println("Error: Could not create listener serverSocket, port might be occupied. Terminating...");
+      logger.fatal("Could not create listener serverSocket, port might be occupied. Terminating...");
 
       System.exit(4);
       tempSocket = null;
@@ -26,7 +32,7 @@ public class Listener implements Runnable {
 
   @Override
   public void run() {
-    System.out.format("Listening on %s:%d", Helper.getIPAddress(), App.APP_PORT);
+    logger.info(String.format("Listening on %s:%d", Helper.getIPAddress(), App.APP_PORT));
 
     //noinspection InfiniteLoopStatement
     while (true) {
@@ -34,19 +40,19 @@ public class Listener implements Runnable {
       try {
         clientSocket = serverSocket.accept();
       } catch (IOException e) {
-        System.out.println("Error: Could not establish client connection.");
+        logger.error("Could not establish client connection.");
 
         continue;
       }
 
       // Create new Node instance and pass the `clientSocket`
       if (!Manager.createAndAddNewNode(clientSocket)) {
-        System.out.println("Warning: Established client connection can not be handled further.");
+        logger.warn("Established client connection can not be handled further.");
 
         try {
           clientSocket.close();
         } catch (IOException e) {
-          System.out.println("Warning: Established client connection can not be closed.");
+          logger.warn("Established client connection can not be closed.");
         }
       }
     }
