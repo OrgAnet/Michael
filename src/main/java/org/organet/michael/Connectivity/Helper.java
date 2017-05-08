@@ -7,6 +7,8 @@ import java.net.*;
 import java.util.*;
 
 public class Helper {
+  public static final int ELECTION_SCORE_THRESHOLD = 2;
+
   private static final Logger logger = LogManager.getLogger(Helper.class.getName());
 
   private static final NetworkInterface adhocInterface;
@@ -49,18 +51,6 @@ public class Helper {
       interfacesCount += 1;
       logger.info("Found network interface: \"{}\".", theInterface.getName());
 
-      // // The interface MUST be up
-      // try {
-      //   if (!theInterface.isUp()) {
-      //     continue; // Continue with the next interface since this one is not up
-      //   }
-      // } catch (SocketException e) {
-      //   continue; // Continue with the next interface since this interface is erroneous
-      // }
-      //
-      // NOTE Since there is an implication on Java's net library (`isUp` returns false even if \
-      //      the interface is up) we simply skip this (is up) check
-
       // The interface MUST NOT be loopback
       try {
         if (theInterface.isLoopback()) {
@@ -70,8 +60,7 @@ public class Helper {
         continue; // Continue with the next interface since this interface is erroneous
       }
 
-      // TODO Find out virtual interfaces are acceptable \
-      // But for now we are not accept them
+      // The interface MUST be a physical one
       if (theInterface.isVirtual()) {
         continue;
       }
@@ -86,28 +75,36 @@ public class Helper {
       return null;
     }
 
-    logger.info("{} network interfaces found on the system.", interfacesCount);
+    logger.info("{} network interface(s) found on the system.", interfacesCount);
 
     return electAdhocInterface(adhocInterfaceCandidates);
   }
 
   private static NetworkInterface electAdhocInterface(List<NetworkInterface> candidateInterfaces) {
-    logger.info("The most suitable network interface will be elected among {} candidates.", candidateInterfaces.size());
+    logger.info("The most suitable network interface will be elected among {} candidates with the threshold being {}.",
+      candidateInterfaces.size(), ELECTION_SCORE_THRESHOLD);
 
     SortedMap<Integer, NetworkInterface> interfacesAndScores = new TreeMap<>();
 
     for (NetworkInterface candidate : candidateInterfaces) {
       int score = 0;
 
-      if (candidate.getParent() == null) {
+      char[] candidateNameCharacters = candidate.getName().toCharArray();
+      if (candidateNameCharacters[0] == 'w') {
+        score += 1;
+      }
+      if (candidateNameCharacters[1] == 'l') {
+        score += 1;
+      }
+      if (candidateNameCharacters[2] == 'a' || candidateNameCharacters[2] == 'p') {
+        score += 1;
+      }
+      if (candidateNameCharacters[2] == 'n') {
         score += 1;
       }
 
-      if (candidate.getDisplayName().startsWith("wlan")) {
-        score += 3;
-      } else if (candidate.getDisplayName().startsWith("wl")) {
-        score += 2;
-      } else if (candidate.getDisplayName().startsWith("w")) {
+      if (candidateNameCharacters[candidateNameCharacters.length - 1] >= '0' &&
+        candidateNameCharacters[candidateNameCharacters.length - 1] <= '9') {
         score += 1;
       }
 
@@ -118,6 +115,12 @@ public class Helper {
       logger.info("Network interface named \"{}\" has score of {}.", candidate.getName(), score);
 
       interfacesAndScores.put(score, candidate);
+    }
+
+    if (((Integer) ((TreeMap) interfacesAndScores).lastEntry().getKey()) <= ELECTION_SCORE_THRESHOLD) {
+      logger.fatal("No suitable network interface has been found for ad-hoc networking. Terminating...");
+
+      System.exit(5);
     }
 
     NetworkInterface electedInterface = (NetworkInterface) ((TreeMap) interfacesAndScores).lastEntry().getValue();
@@ -157,11 +160,8 @@ public class Helper {
 
   private static InetAddress obtainBroadcastAddress() {
     List<InterfaceAddress> addresses = adhocInterface.getInterfaceAddresses();
-    Iterator<InterfaceAddress> addressIterator = addresses.iterator();
 
-    while (addressIterator.hasNext()) {
-      InterfaceAddress theAddress = addressIterator.next();
-
+    for (InterfaceAddress theAddress : addresses) {
       if (ipAddress == null) {
         // Return first address' broadcast address
         return theAddress.getBroadcast();
@@ -184,7 +184,11 @@ public class Helper {
   }
 
   private static String stringifyInetAddress(InetAddress ipAddress) {
-    return ipAddress.toString().replaceAll("^/+", "");
+    if (ipAddress instanceof Inet6Address) {
+      return ipAddress.getHostAddress();
+    } else {
+      return ipAddress.toString().replaceAll("^/+", "");
+    }
   }
 
   public static String getMACAddress() {
