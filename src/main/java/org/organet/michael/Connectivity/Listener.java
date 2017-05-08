@@ -15,8 +15,6 @@ public class Listener implements Runnable {
   private final ServerSocket serverSocket;
 
   Listener() {
-    logger.info(String.format("Listening on %s:%s", Helper.getIPAddress(), App.APP_PORT));
-
     ServerSocket tempSocket;
     try {
       tempSocket = new ServerSocket(App.APP_PORT, 50, InetAddress.getByName(Helper.getIPAddress()));
@@ -32,7 +30,7 @@ public class Listener implements Runnable {
 
   @Override
   public void run() {
-    logger.info(String.format("Listening on %s:%d", Helper.getIPAddress(), App.APP_PORT));
+    logger.info("Listening on {}:{}.", Helper.getIPAddress(), App.APP_PORT);
 
     //noinspection InfiniteLoopStatement
     while (true) {

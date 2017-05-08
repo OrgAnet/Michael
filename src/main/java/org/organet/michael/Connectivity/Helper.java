@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.net.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Helper {
   private static final Logger logger = LogManager.getLogger(Helper.class.getName());
@@ -42,8 +41,13 @@ public class Helper {
       return null;
     }
 
+    int interfacesCount = 0;
+
     while (interfaces.hasMoreElements()) {
       NetworkInterface theInterface = interfaces.nextElement();
+
+      interfacesCount += 1;
+      logger.info("Found network interface: \"{}\".", theInterface.getName());
 
       // // The interface MUST be up
       // try {
@@ -82,10 +86,14 @@ public class Helper {
       return null;
     }
 
-    return findAdhocInterface(adhocInterfaceCandidates);
+    logger.info("{} network interfaces found on the system.", interfacesCount);
+
+    return electAdhocInterface(adhocInterfaceCandidates);
   }
 
-  private static NetworkInterface findAdhocInterface(List<NetworkInterface> candidateInterfaces) {
+  private static NetworkInterface electAdhocInterface(List<NetworkInterface> candidateInterfaces) {
+    logger.info("The most suitable network interface will be elected among {} candidates.", candidateInterfaces.size());
+
     SortedMap<Integer, NetworkInterface> interfacesAndScores = new TreeMap<>();
 
     for (NetworkInterface candidate : candidateInterfaces) {
@@ -107,11 +115,17 @@ public class Helper {
         score += 1;
       }
 
+      logger.info("Network interface named \"{}\" has score of {}.", candidate.getName(), score);
+
       interfacesAndScores.put(score, candidate);
     }
 
+    NetworkInterface electedInterface = (NetworkInterface) ((TreeMap) interfacesAndScores).lastEntry().getValue();
+
+    logger.info("\"{}\" is elected as ad-hoc network interface.", electedInterface.getName());
+
     // Last entry has the highest score
-    return ((NetworkInterface) ((TreeMap) interfacesAndScores).lastEntry().getValue());
+    return (electedInterface);
   }
 
   private static byte[] obtainMACAddress() {
@@ -177,7 +191,7 @@ public class Helper {
     return macAddress;
   }
 
-  static String getIPAddress() {
+  public static String getIPAddress() {
     return ipAddress;
   }
 
