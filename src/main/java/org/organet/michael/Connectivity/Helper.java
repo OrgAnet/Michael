@@ -184,6 +184,10 @@ public class Helper {
   }
 
   private static String stringifyInetAddress(InetAddress ipAddress) {
+    if (ipAddress == null) {
+      return null;
+    }
+
     if (ipAddress instanceof Inet6Address) {
       return ipAddress.getHostAddress();
     } else {

@@ -33,13 +33,15 @@ public class Node implements Runnable {
     //noinspection InfiniteLoopStatement
     while (!shutdown) {
       try {
+        line = inlet.readLine();
         // TODO Use `inlet.ready()` if has an value
-        if ((line = inlet.readLine()) == null) {
+        if (line == null) {
           continue;
         }
       } catch (IOException e) {
         // e.printStackTrace();
 
+        shutdown = true;
         continue;
       }
 
@@ -53,9 +55,13 @@ public class Node implements Runnable {
           deviceID = String.valueOf((int) Math.floor(Math.random() * 101));
           Manager.disconnectFrom(deviceID);
           logger.warn("Node was disconnected due to lack of information.");
+
+          shutdown = true;
         } else {
           deviceID = line.split(AdhocMessage.PART_SEPARATOR)[2];
           logger.info("Node device identifier acquired: " + deviceID);
+
+          sendMessage(new HelloMessage());
         }
       } else {
         Manager.processMessage(deviceID, line);

@@ -25,6 +25,8 @@ public class Manager {
       return false;
     }
 
+    logger.info("Client connection established.");
+
     // NOTE Threads can be controlled if stored
     (new Thread(newNode)).start();
 
@@ -46,6 +48,7 @@ public class Manager {
 
   static void processMessage(String nodeDeviceID, String messageString) {
     // TODO Convert `messageString` to AdhocMessage
+    logger.info("Message received from {}: {}", nodeDeviceID, messageString);
   }
 
   private static int getNodeIndexByDeviceID(String nodeDeviceID) {
