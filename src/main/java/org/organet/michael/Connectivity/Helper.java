@@ -7,7 +7,7 @@ import java.net.*;
 import java.util.*;
 
 public class Helper {
-  public static final int ELECTION_SCORE_THRESHOLD = 2;
+  public static final int ELECTION_SCORE_THRESHOLD = 5;
 
   private static final Logger logger = LogManager.getLogger(Helper.class.getName());
 
@@ -112,6 +112,27 @@ public class Helper {
         score += 1;
       }
 
+      // Check if the interface has IPv4 address bound
+      Enumeration<InetAddress> addresses = candidate.getInetAddresses();
+
+      while (addresses.hasMoreElements()) {
+        InetAddress theAddress = addresses.nextElement();
+
+        if (theAddress instanceof Inet4Address) {
+          score += 1;
+
+          // TODO Check if the address starts with "192.168"
+          String[] theAddressOctets = stringifyInetAddress(theAddress).split("\\.");
+
+          if (theAddressOctets[0].equals("192")) {
+            score += 1;
+          }
+          if (theAddressOctets[0].equals("168")) {
+            score += 1;
+          }
+        }
+      }
+
       logger.info("Network interface named \"{}\" has score of {}.", candidate.getName(), score);
 
       interfacesAndScores.put(score, candidate);
@@ -164,10 +185,7 @@ public class Helper {
     List<InterfaceAddress> addresses = adhocInterface.getInterfaceAddresses();
 
     for (InterfaceAddress theAddress : addresses) {
-      if (ipAddress == null) {
-        // Return first address' broadcast address
-        return theAddress.getBroadcast();
-      } else if (theAddress.getAddress().equals(rawIPAddress)) {
+      if (theAddress.getAddress().equals(rawIPAddress)) {
         return theAddress.getBroadcast();
       }
     }
