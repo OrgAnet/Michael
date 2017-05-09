@@ -16,6 +16,12 @@ abstract public class AdhocMessage {
     arguments = null;
   }
 
+  public AdhocMessage(MessageDomains domain, String command, Object arguments) {
+    this.domain = domain;
+    this.command = command.toLowerCase();
+    this.arguments = arguments;
+  }
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();

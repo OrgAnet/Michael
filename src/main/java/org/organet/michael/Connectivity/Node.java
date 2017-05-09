@@ -8,6 +8,8 @@ import org.organet.michael.Connectivity.Messages.NODE.*;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 
 public class Node implements Runnable {
   private static final Logger logger = LogManager.getLogger(Node.class.getName());
@@ -15,33 +17,72 @@ public class Node implements Runnable {
   private Socket socket;
   private BufferedReader inlet;
   private OutputStream outlet;
+  private String outputBuffer = "";
   private String deviceID = null;
   private volatile boolean shutdown = false;
 
   Node(Socket nodeSocket) throws IOException {
     socket = nodeSocket;
+    socket.setSoTimeout(200); // TODO Doc here - timeout for introduce message reply
     inlet = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     outlet = socket.getOutputStream();
 
     // Tell the new node to introduce itself
-    sendMessage(new IntroduceMessage());
+    send(new IntroduceMessage());
   }
 
   @Override
   public void run() {
     String line;
     //noinspection InfiniteLoopStatement
-    while (!shutdown) {
+    while (true) {
       try {
-        line = inlet.readLine();
-        // TODO Use `inlet.ready()` if has an value
-        if (line == null) {
+        Thread.sleep(10);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+
+        // Give this socket a last chance to send last message (if any)
+        shutdown = true;
+        continue;
+      }
+
+      // Check if anything to be sent
+      if (outputBuffer.length() > 0) {
+        try {
+          outlet.write(String.valueOf(outputBuffer + "\n\r").getBytes());
+          outlet.flush();
+        } catch (IOException e) {
+          logger.warn("Could not send the message to node.");
+        }
+
+        // Also 'flush' the 'buffer'
+        outputBuffer = "";
+      }
+
+      if (shutdown) {
+        // After send last message (if any) stop listening
+        break;
+      }
+
+      try {
+        if ((line = inlet.readLine()) == null) {
           continue;
         }
+      } catch (SocketTimeoutException e) {
+        logger.warn("Node connection will be closed due to reply for introduce message is timed out.");
+
+        // Do NOT give a last chance to send last message (if any)
+        break;
       } catch (IOException e) {
         // e.printStackTrace();
 
+        // Give this socket a last chance to send last message (if any)
         shutdown = true;
+        continue;
+      }
+
+      line = line.replaceAll("(\\r|\\n)", "");
+      if (line.length() == 0) {
         continue;
       }
 
@@ -61,11 +102,23 @@ public class Node implements Runnable {
           deviceID = line.split(AdhocMessage.PART_SEPARATOR)[2];
           logger.info("Node device identifier acquired: " + deviceID);
 
-          sendMessage(new HelloMessage());
+          // Since we have our reply for the introduce message we can
+          // reset the socket read timeout.
+          try {
+            socket.setSoTimeout(0);
+          } catch (SocketException e) {
+            e.printStackTrace(); // FIXME
+          }
         }
       } else {
         Manager.processMessage(deviceID, line);
       }
+    }
+
+    try {
+      releaseResources();
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 
@@ -73,25 +126,21 @@ public class Node implements Runnable {
     return deviceID;
   }
 
-  private void sendMessage(AdhocMessage message) {
-    try {
-      outlet.write(String.valueOf(message + "\n\r").getBytes());
-      outlet.flush();
-    } catch (IOException e) {
-      logger.warn("Could not send the message to node.");
-    }
+  private void send(AdhocMessage message) {
+    outputBuffer = message.toString();
   }
 
-  void disconnect() throws IOException {
+  void disconnect() {
     // Stop listening
     shutdown = true;
 
     // Notify the node
-    sendMessage(new DisconnectMessage());
+    send(new DisconnectMessage());
+  }
 
-    outlet.flush();
+  private void releaseResources() throws IOException {
     inlet.close(); // FIXME Expect an I/O exception since socket is already closed
-//    outlet.close();
+    outlet.close();
     socket.close();
   }
 }

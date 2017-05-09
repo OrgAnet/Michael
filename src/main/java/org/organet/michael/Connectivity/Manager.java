@@ -48,7 +48,6 @@ public class Manager {
 
   static void processMessage(String nodeDeviceID, String messageString) {
     // TODO Convert `messageString` to AdhocMessage
-    logger.info("Message received from {}: {}", nodeDeviceID, messageString);
   }
 
   private static int getNodeIndexByDeviceID(String nodeDeviceID) {
@@ -78,13 +77,7 @@ public class Manager {
       return true;
     }
 
-    try {
-      nodes.get(targetNodeIndex).disconnect();
-    } catch (IOException e) {
-      logger.error("Could not disconnect from node.");
-
-      return false;
-    }
+    nodes.get(targetNodeIndex).disconnect();
 
     return (nodes.remove(targetNodeIndex) != null);
   }
