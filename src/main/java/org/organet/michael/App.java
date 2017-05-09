@@ -23,7 +23,7 @@ public class App {
     if (args.length < 1) {
       logger.warn("Shared directory path was not set, checking in the current directory with name \"organet_shared\"");
 
-      sharedDirectory = new File("./organet_shared");
+      sharedDirectory = new File("organet_shared");
       if (!sharedDirectory.exists() || !sharedDirectory.isDirectory()) {
         logger.fatal("Shared directory path was missing and designated directory has not been found. Terminating...");
 

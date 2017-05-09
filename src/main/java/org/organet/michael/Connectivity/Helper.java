@@ -148,6 +148,8 @@ public class Helper {
     while (addresses.hasMoreElements()) {
       InetAddress theAddress = addresses.nextElement();
 
+      logger.info("IP found on ad-hoc network interface: {}", stringifyInetAddress(theAddress));
+
       if (theAddress instanceof Inet4Address) {
         // TODO Do more checks on the addresses if necessary
 
