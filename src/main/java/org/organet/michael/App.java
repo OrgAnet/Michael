@@ -11,11 +11,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public class App {
+  public static final int APP_PORT = 5169;
+  public static final String APP_PACKAGE = "org.organet.michael";
+
   private static final Logger logger = LogManager.getLogger(App.class.getName());
+
   private static String deviceID;
   private static File sharedDirectory;
-
-  public static final int APP_PORT = 5169;
 
 //  static ContentStore localIndex; // TODO Implement ContentStore after server
 

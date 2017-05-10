@@ -7,9 +7,12 @@ import org.organet.michael.Connectivity.Messages.MessageDomains;
 import org.organet.michael.Connectivity.Messages.NODE.*;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+
+import static org.organet.michael.Connectivity.Messages.MessageDomains.NODE;
 
 public class Node implements Runnable {
   private static final Logger logger = LogManager.getLogger(Node.class.getName());
@@ -87,7 +90,7 @@ public class Node implements Runnable {
       }
 
       if (deviceID == null) {
-        if (!line.startsWith(MessageDomains.NODE.toString() + AdhocMessage.PART_SEPARATOR + "introduce")) {
+        if (!line.startsWith(NODE.toString() + AdhocMessage.PART_SEPARATOR + "introduce")) {
           // The first message that the node sent MUST be introduction message
           // (as a response to introduction request message). Otherwise the
           // socket MUST be closed.
@@ -111,7 +114,7 @@ public class Node implements Runnable {
           }
         }
       } else {
-        Manager.processMessage(deviceID, line);
+        processMessage(line);
       }
     }
 
@@ -122,7 +125,7 @@ public class Node implements Runnable {
     }
   }
 
-  String getDeviceID() {
+  public String getDeviceID() {
     return deviceID;
   }
 
@@ -139,8 +142,44 @@ public class Node implements Runnable {
   }
 
   private void releaseResources() throws IOException {
-    inlet.close(); // FIXME Expect an I/O exception since socket is already closed
+    inlet.close();
     outlet.close();
     socket.close();
+  }
+
+  private void processMessage(String messageString) {
+    // TODO Check if the message relevant to the Node (the domain is NODE - this class)
+    //      Else pass the message to the Manager for further processing
+
+    AdhocMessage message;
+    try {
+      message = AdhocMessage.parse(messageString);
+    } catch (ClassNotFoundException e) {
+      logger.error("Message class ({}) could not be found. The message will be ignored.");
+
+      return;
+    } catch (NoSuchMethodException e) {
+      e.printStackTrace();
+
+      return;
+    } catch (InstantiationException e) {
+      e.printStackTrace();
+
+      return;
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
+
+      return;
+    } catch (InvocationTargetException e) {
+      e.printStackTrace();
+
+      return;
+    }
+
+    if (message.getDomain() == NODE) {
+      //
+    } else {
+      Manager.processMessage(this, message);
+    }
   }
 }

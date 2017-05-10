@@ -3,13 +3,18 @@ package org.organet.michael.Connectivity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.organet.michael.Connectivity.Messages.AdhocMessage;
+import org.organet.michael.ProcessesMessage;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Manager {
+import static org.organet.michael.App.APP_PACKAGE;
+
+public class Manager implements ProcessesMessage {
   private static final Logger logger = LogManager.getLogger(Manager.class.getName());
 
   private static Listener listener = new Listener();
@@ -46,8 +51,34 @@ public class Manager {
     // TODO Iterate through the nodes and send the message to all of them
   }
 
-  static void processMessage(String nodeDeviceID, String messageString) {
-    // TODO Convert `messageString` to AdhocMessage
+  static void processMessage(Node node, AdhocMessage message) {
+    // Check if Manager class exists for the message
+    String clazzName = org.organet.michael.Helper.toDisplayCase(message.getDomain().name());
+    Class<?> clazz;
+    try {
+      clazz = Class.forName(String.format("%s.%s.Manager", APP_PACKAGE, clazzName));
+    } catch (ClassNotFoundException e) {
+      logger.error("Manager class for the message ({}) could not be found. Message will be ignored.", clazzName);
+
+      return;
+    }
+
+    // Check if `processMessage` method exists
+    Method managerMessageProcessor;
+    try {
+      managerMessageProcessor = clazz.getMethod(
+        "processMessage", Node.class, AdhocMessage.class);
+    } catch (NoSuchMethodException e) {
+      logger.error("Manager class can not handle the message. Message will be ignored.", clazzName);
+
+      return;
+    }
+
+    try {
+      managerMessageProcessor.invoke(null, node, message);
+    } catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
+      logger.error("Manager class' message processing method is not suitable. Message will be ignored.", clazzName);
+    }
   }
 
   private static int getNodeIndexByDeviceID(String nodeDeviceID) {

@@ -2,12 +2,13 @@ package org.organet.michael.Connectivity;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.organet.michael.App;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+
+import static org.organet.michael.App.APP_PORT;
 
 public class Listener implements Runnable {
   private static final Logger logger = LogManager.getLogger(Listener.class.getName());
@@ -17,8 +18,7 @@ public class Listener implements Runnable {
   Listener() {
     ServerSocket tempSocket;
     try {
-      tempSocket = new ServerSocket(App.APP_PORT, 50, InetAddress.getByName(Helper.getIPAddress()));
-//      tempSocket = new ServerSocket(App.APP_PORT);
+      tempSocket = new ServerSocket(APP_PORT, 50, InetAddress.getByName(Helper.getIPAddress()));
     } catch (IOException e) {
       logger.fatal("Could not create listener serverSocket, port might be occupied. Terminating...");
 
@@ -30,7 +30,7 @@ public class Listener implements Runnable {
 
   @Override
   public void run() {
-    logger.info("Listening on {}:{}.", Helper.getIPAddress(), App.APP_PORT);
+    logger.info("Listening on {}:{}.", Helper.getIPAddress(), APP_PORT);
 
     //noinspection InfiniteLoopStatement
     while (true) {
