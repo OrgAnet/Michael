@@ -121,7 +121,7 @@ public class Helper {
         if (theAddress instanceof Inet4Address) {
           score += 1;
 
-          // TODO Check if the address starts with "192.168"
+          // Check if the address starts with "192.168"
           String[] theAddressOctets = stringifyInetAddress(theAddress).split("\\.");
 
           if (theAddressOctets[0].equals("192")) {

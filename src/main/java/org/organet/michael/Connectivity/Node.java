@@ -148,8 +148,8 @@ public class Node implements Runnable {
   }
 
   private void processMessage(String messageString) {
-    // TODO Check if the message relevant to the Node (the domain is NODE - this class)
-    //      Else pass the message to the Manager for further processing
+    // Check if the message relevant to the Node (the domain is NODE - this class).
+    // Else pass the message to the Manager for further processing
 
     AdhocMessage message;
     try {

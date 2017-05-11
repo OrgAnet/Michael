@@ -46,7 +46,7 @@ abstract public class AdhocMessage {
 
   public static <T extends AdhocMessage> T parse(String messageString) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
     // Extract domain, command and argument (if any)
-    String[] splittedMessageString = messageString.split(PART_SEPARATOR, 3); // TODO Test 'limit'
+    String[] splittedMessageString = messageString.split(PART_SEPARATOR, 3);
 
     String messageDomain = splittedMessageString[0];
     String messageCommand = splittedMessageString[1];
