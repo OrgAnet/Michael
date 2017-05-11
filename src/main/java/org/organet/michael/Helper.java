@@ -19,4 +19,17 @@ public class Helper {
 
     return sb.toString();
   }
+
+  public static int random(int min, int max) {
+    if (min == max) {
+      return min;
+    } else if (min > max) {
+      int tmp = min;
+      min = max;
+      max = tmp;
+    }
+
+    int range = (max - min) + 1;
+    return (((int) Math.floor(Math.random() * range)) + min);
+  }
 }

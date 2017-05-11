@@ -13,6 +13,8 @@ import java.util.List;
 public class App {
   public static final int APP_PORT = 5169;
   public static final String APP_PACKAGE = "org.organet.michael";
+  // Defines how much the message allowed to hop
+  public static final int DEFAULT_MESSAGE_TTL = 3;
 
   private static final Logger logger = LogManager.getLogger(App.class.getName());
 
@@ -81,5 +83,9 @@ public class App {
     logger.info("Device ID: {}", deviceId);
 
     return deviceId;
+  }
+
+  public static String getDeviceID() {
+    return deviceID;
   }
 }
