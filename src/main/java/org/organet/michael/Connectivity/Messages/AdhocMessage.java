@@ -132,7 +132,9 @@ abstract public class AdhocMessage {
       ? clazz.getConstructor()
       : clazz.getConstructor(Object.class);
 
-    return (T) ctor.newInstance();
+    return (messageArgument == null)
+      ? (T) ctor.newInstance()
+      : (T) ctor.newInstance(messageArgument);
   }
 
   public int incrementNonce() {
