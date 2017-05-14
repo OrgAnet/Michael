@@ -13,14 +13,18 @@ import static org.organet.michael.App.APP_PORT;
 public class Listener implements Runnable {
   private static final Logger logger = LogManager.getLogger(Listener.class.getName());
 
+  private final Manager manager;
+
   private final ServerSocket serverSocket;
 
-  Listener() {
+  Listener(Manager manager) {
+    this.manager = manager;
+
     ServerSocket tempSocket;
     try {
       tempSocket = new ServerSocket(APP_PORT, 50, InetAddress.getByName(Helper.getIPAddress()));
     } catch (IOException e) {
-      logger.fatal("Could not create listener serverSocket, port might be occupied. Terminating...");
+      logger.fatal("Could not create listener socket, port might be occupied. Terminating...");
 
       System.exit(4);
       tempSocket = null;
@@ -44,7 +48,7 @@ public class Listener implements Runnable {
       }
 
       // Create new Node instance and pass the `clientSocket`
-      if (!Manager.createAndAddNewNode(clientSocket)) {
+      if (!manager.createAndAddNewNode(clientSocket)) {
         logger.warn("Established client connection can not be handled further.");
 
         try {

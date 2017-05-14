@@ -6,11 +6,18 @@ import org.organet.michael.Connectivity.Messages.AdhocMessage;
 import org.organet.michael.Connectivity.Node;
 import org.organet.michael.ProcessesMessage;
 
-public class Manager implements ProcessesMessage {
+public class Manager extends ManagerBase {
   private static final Logger logger = LogManager.getLogger(Manager.class.getName());
+  // Singleton reference
+  private static final Manager thisInst = new Manager();
 
-  public static void processMessage(Node node, AdhocMessage message) {
-    logger.info("Message received from {}: {}", node.getDeviceID(), message.getCommand());
-    //
+  private Manager() {
+    // This ctor is private and empty. The reason of these is to
+    // hide/avoid the instantiation of this class except itself.
+  }
+
+  public static Manager getInstance() {
+    return thisInst;
+  }
   }
 }

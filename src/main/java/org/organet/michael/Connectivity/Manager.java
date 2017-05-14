@@ -15,11 +15,24 @@ import static org.organet.michael.App.APP_PACKAGE;
 
 public class Manager {
   private static final Logger logger = LogManager.getLogger(Manager.class.getName());
+  // Singleton reference
+  private static final Manager thisInst = new Manager();
 
-  private static Listener listener = new Listener();
-  private static List<Node> nodes = new ArrayList<>();
+  private Listener listener;
+  private List<Node> nodes = new ArrayList<>();
 
-  static void handleMessage(Node node, AdhocMessage message) {
+  private Manager() {
+    // This ctor is private and empty. The reason of these is to
+    // hide/avoid the instantiation of this class except itself.
+
+    listener = new Listener(this);
+  }
+
+  public static Manager getInstance() {
+    return thisInst;
+  }
+
+  void handleMessage(Node node, AdhocMessage message) {
     // Check if Manager class exists for the message
     String clazzName = org.organet.michael.Helper.toDisplayCase(message.getDomain().name()).replaceAll("\\_", "");
     Class<?> clazz;
@@ -36,7 +49,6 @@ public class Manager {
     Object managerInst;
     try {
       managerGetInstance = clazz.getMethod("getInstance");
-//      managerGetInstance = clazz.getDeclaredMethod("getInstance");
       managerInst = managerGetInstance.invoke(null);
     } catch (NoSuchMethodException e) {
       logger.error("Manager class can not handle the message. Message will be ignored.", clazzName);
@@ -70,7 +82,7 @@ public class Manager {
     }
   }
 
-  static boolean createAndAddNewNode(Socket nodeSocket) {
+  boolean createAndAddNewNode(Socket nodeSocket) {
     Node newNode;
     try {
       newNode = new Node(nodeSocket);
@@ -88,20 +100,20 @@ public class Manager {
     return nodes.add(newNode);
   }
 
-  public static void listen() {
+  public void listen() {
     // NOTE Threads can be controlled if stored
     (new Thread(listener)).start();
   }
 
-  static void discover() {
+  void discover() {
     // TODO Find other nodes in the ad-hoc network
   }
 
-  static void broadcast(AdhocMessage message) {
+  void broadcast(AdhocMessage message) {
     // TODO Iterate through the nodes and send the message to all of them
   }
 
-  private static int getNodeIndexByDeviceID(String nodeDeviceID) {
+  private int getNodeIndexByDeviceID(String nodeDeviceID) {
     for (int i = 0, len = nodes.size(); i < len; i++) {
       if (nodes.get(i).getDeviceID().equals(nodeDeviceID)) {
         return i;
@@ -111,7 +123,7 @@ public class Manager {
     return -1;
   }
 
-  static Node getNodeByDeviceID(String nodeDeviceID) {
+  Node getNodeByDeviceID(String nodeDeviceID) {
     for (Node node : nodes) {
       if (node.getDeviceID().equals(nodeDeviceID)) {
         return node;
@@ -121,7 +133,7 @@ public class Manager {
     return null;
   }
 
-  static boolean disconnectFrom(String nodeDeviceID) {
+  boolean disconnectFrom(String nodeDeviceID) {
     int targetNodeIndex = getNodeIndexByDeviceID(nodeDeviceID);
 
     if (targetNodeIndex == -1) {

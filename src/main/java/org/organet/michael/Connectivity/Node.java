@@ -17,6 +17,8 @@ import static org.organet.michael.Connectivity.Messages.MessageDomains.NODE;
 public class Node implements Runnable {
   private static final Logger logger = LogManager.getLogger(Node.class.getName());
 
+  private final Manager manager = Manager.getInstance();
+
   private Socket socket;
   private BufferedReader inlet;
   private OutputStream outlet;
@@ -97,7 +99,7 @@ public class Node implements Runnable {
           //
           // Assign random device id (0-100) to remove this very node from the manager's list
           deviceID = String.valueOf((int) Math.floor(Math.random() * 101));
-          Manager.disconnectFrom(deviceID);
+          manager.disconnectFrom(deviceID);
           logger.warn("Node was disconnected due to lack of information.");
 
           shutdown = true;

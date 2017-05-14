@@ -20,6 +20,10 @@ public class App {
   private static final Logger logger = LogManager.getLogger(App.class.getName());
   private static final Level VERBOSE = Level.forName("VERBOSE", 550);
 
+  private static final Manager connectivityManager = Manager.getInstance();
+  // NOTE Since FileSystem requires that `sharedDirectory`, assign it after obtain `sharedDirectory`
+  private static org.organet.michael.FileSystem.Manager fileSystemManager;
+
   private static String deviceID;
   private static File sharedDirectory;
 
@@ -45,10 +49,15 @@ public class App {
     logger.log(VERBOSE, "MAC address is \"{}\", IP address is \"{}\" and broadcast address is \"{}\".",
       Helper.getMACAddress(), Helper.getIPAddress(), Helper.getBroadcastAddress());
 
+    fileSystemManager = org.organet.michael.FileSystem.Manager.getInstance();
+
 //    localStore = new ContentStore(true);
 
+    // Start watcher
+    fileSystemManager.start(sharedDirectory.getAbsolutePath());
+
     // Start listener
-    Manager.listen();
+    connectivityManager.listen();
   }
 
   private static String calculateDeviceID() {
@@ -89,5 +98,9 @@ public class App {
 
   public static String getDeviceID() {
     return deviceID;
+  }
+
+  public static String getSharedDirectoryPath() {
+    return sharedDirectory.getPath();
   }
 }

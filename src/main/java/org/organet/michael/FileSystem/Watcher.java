@@ -15,6 +15,8 @@ import static java.nio.file.StandardWatchEventKinds.*;
 public class Watcher implements Runnable {
   private static final Logger logger = LogManager.getLogger(Watcher.class.getName());
 
+  private final Manager manager = Manager.getInstance();
+
   private final WatchService watcher;
   private final Map<WatchKey, Path> keys;
 
