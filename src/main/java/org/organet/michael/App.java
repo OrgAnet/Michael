@@ -1,5 +1,6 @@
 package org.organet.michael;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.organet.michael.Connectivity.Helper;
@@ -17,6 +18,7 @@ public class App {
   public static final int DEFAULT_MESSAGE_TTL = 3;
 
   private static final Logger logger = LogManager.getLogger(App.class.getName());
+  private static final Level VERBOSE = Level.forName("VERBOSE", 550);
 
   private static String deviceID;
   private static File sharedDirectory;
@@ -40,7 +42,7 @@ public class App {
     logger.info("Shared directory path is \"{}\".", sharedDirectory.getAbsolutePath());
 
     deviceID = calculateDeviceID();
-    logger.info("MAC address is \"{}\", IP address is \"{}\" and broadcast address is \"{}\".",
+    logger.log(VERBOSE, "MAC address is \"{}\", IP address is \"{}\" and broadcast address is \"{}\".",
       Helper.getMACAddress(), Helper.getIPAddress(), Helper.getBroadcastAddress());
 
 //    localStore = new ContentStore(true);

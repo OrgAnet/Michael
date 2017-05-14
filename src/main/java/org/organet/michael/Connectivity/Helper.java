@@ -1,5 +1,6 @@
 package org.organet.michael.Connectivity;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -10,6 +11,7 @@ public class Helper {
   public static final int ELECTION_SCORE_THRESHOLD = 5;
 
   private static final Logger logger = LogManager.getLogger(Helper.class.getName());
+  private static final Level VERBOSE = Level.forName("VERBOSE", 550);
 
   private static final NetworkInterface adhocInterface;
   private static final byte[] rawMACAddress; // The MAC address of the ad-hoc network interface card
@@ -49,7 +51,7 @@ public class Helper {
       NetworkInterface theInterface = interfaces.nextElement();
 
       interfacesCount += 1;
-      logger.info("Found network interface: \"{}\".", theInterface.getName());
+      logger.log(VERBOSE, "Found network interface: \"{}\".", theInterface.getName());
 
       // The interface MUST NOT be loopback
       try {
@@ -75,13 +77,13 @@ public class Helper {
       return null;
     }
 
-    logger.info("{} network interface(s) found on the system.", interfacesCount);
+    logger.log(VERBOSE, "{} network interface(s) found on the system.", interfacesCount);
 
     return electAdhocInterface(adhocInterfaceCandidates);
   }
 
   private static NetworkInterface electAdhocInterface(List<NetworkInterface> candidateInterfaces) {
-    logger.info("The most suitable network interface will be elected among {} candidates with the threshold being {}.",
+    logger.log(VERBOSE, "The most suitable network interface will be elected among {} candidates with the threshold being {}.",
       candidateInterfaces.size(), ELECTION_SCORE_THRESHOLD);
 
     SortedMap<Integer, NetworkInterface> interfacesAndScores = new TreeMap<>();
@@ -133,7 +135,7 @@ public class Helper {
         }
       }
 
-      logger.info("Network interface named \"{}\" has score of {}.", candidate.getName(), score);
+      logger.log(VERBOSE, "Network interface named \"{}\" has score of {}.", candidate.getName(), score);
 
       interfacesAndScores.put(score, candidate);
     }
@@ -169,7 +171,7 @@ public class Helper {
     while (addresses.hasMoreElements()) {
       InetAddress theAddress = addresses.nextElement();
 
-      logger.info("IP found on ad-hoc network interface: {}", stringifyInetAddress(theAddress));
+      logger.log(VERBOSE, "IP found on ad-hoc network interface: {}", stringifyInetAddress(theAddress));
 
       if (theAddress instanceof Inet4Address) {
         // TODO Do more checks on the addresses if necessary
