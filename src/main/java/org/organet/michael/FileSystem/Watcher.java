@@ -28,19 +28,15 @@ public class Watcher implements Runnable {
   /**
    * Creates a WatchService and registers the given directory
    */
-  Watcher(Path dir) throws IOException {
+  private Watcher(Path dir) throws IOException {
     watcher = FileSystems.getDefault().newWatchService();
     keys = new HashMap<>();
 
     registerAll(dir);
-
-    FileTypes.initialize();
   }
 
   public Watcher(String path) throws IOException {
     this(Paths.get(path));
-
-    FileTypes.initialize();
   }
 
   /**
@@ -52,10 +48,10 @@ public class Watcher implements Runnable {
     Path prev = keys.get(key);
     if (prev == null) {
       // TODO Continue formatting printed text
-      logger.info("Register: %s\n", dir);
+      logger.info("Register: {}", dir);
     } else {
       if (!dir.equals(prev)) {
-        logger.info("Update: %s -> %s\n", prev, dir);
+        logger.info("Update: {} -> {}", prev, dir);
       }
     }
 
@@ -95,7 +91,8 @@ public class Watcher implements Runnable {
 
       Path dir = keys.get(key);
       if (dir == null) {
-        System.err.println("WatchKey not recognized!!");
+        logger.error("WatchKey not recognized.");
+
         continue;
       }
 
@@ -134,7 +131,13 @@ public class Watcher implements Runnable {
 
           if (kind == ENTRY_CREATE) {
             // Create a shared file and add to the local index
-//            App.localIndex.add(new SharedFile(child.toString()));
+            try {
+              manager.getLocalRepositoryInst().add(new SharedFile(child.toString(), child.toFile().length()));
+            } catch (Exception e) {
+              e.printStackTrace(); // FIXME
+
+              return;
+            }
 
             // FIXME Implement this behaviour in another way (i.e. anywhere else) \
             // filename MUST stay as it is, it is not the problem here

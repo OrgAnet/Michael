@@ -86,11 +86,11 @@ public class Node implements Runnable {
         continue;
       }
 
-      line = line.replaceAll("(\\r|\\n)", "");
       if (line.length() == 0) {
         continue;
       }
 
+      // TODO Move the deviceID check to `handleMessage`
       if (deviceID == null) {
         if (!line.startsWith(NODE.toString() + AdhocMessage.PART_SEPARATOR + "introduce")) {
           // The first message that the node sent MUST be introduction message
@@ -101,8 +101,6 @@ public class Node implements Runnable {
           deviceID = String.valueOf((int) Math.floor(Math.random() * 101));
           manager.disconnectFrom(deviceID);
           logger.warn("Node was disconnected due to lack of information.");
-
-          shutdown = true;
         } else {
           deviceID = line.split(AdhocMessage.PART_SEPARATOR)[2];
           logger.info("Node device identifier acquired: " + deviceID);
@@ -114,9 +112,11 @@ public class Node implements Runnable {
           } catch (SocketException e) {
             e.printStackTrace(); // FIXME
           }
+
+          send(new IntroduceMessage());
         }
       } else {
-        processMessage(line);
+        handleMessage(line);
       }
     }
 
@@ -149,7 +149,7 @@ public class Node implements Runnable {
     socket.close();
   }
 
-  private void processMessage(String messageString) {
+  private void handleMessage(String messageString) {
     // Check if the message relevant to the Node (the domain is NODE - this class).
     // Else pass the message to the Manager for further processing
 
@@ -157,7 +157,7 @@ public class Node implements Runnable {
     try {
       message = AdhocMessage.parse(messageString);
     } catch (ClassNotFoundException e) {
-      logger.error("Message class ({}) could not be found. The message will be ignored.");
+      logger.error("Message class ({}) could not be found. The message will be ignored.", e.getMessage());
 
       return;
     } catch (NoSuchMethodException e) {
@@ -181,7 +181,7 @@ public class Node implements Runnable {
     if (message.getDomain() == NODE) {
       //
     } else {
-      Manager.processMessage(this, message);
+      manager.handleMessage(this, message);
     }
   }
 }

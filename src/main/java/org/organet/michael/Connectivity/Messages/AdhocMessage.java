@@ -28,7 +28,7 @@ abstract public class AdhocMessage {
   private String messageID;
   private int nonce = 0;
   private int ttl = App.DEFAULT_MESSAGE_TTL;
-  // TODO Add nonce and other NDN stuff here
+  // TODO NDN stuff here
 
   public AdhocMessage(MessageDomains domain, String command) {
     this.domain = domain;
@@ -128,13 +128,13 @@ abstract public class AdhocMessage {
       "%s.Connectivity.Messages.%s.%sMessage",
       APP_PACKAGE, messageDomain.toUpperCase(), Helper.toDisplayCase(messageCommand)));
 
-    Constructor<?> ctor = (messageArgument == null)
-      ? clazz.getConstructor()
-      : clazz.getConstructor(Object.class);
-
-    return (messageArgument == null)
-      ? (T) ctor.newInstance()
-      : (T) ctor.newInstance(messageArgument);
+    if (messageArgument == null) {
+      Constructor<?> ctor = clazz.getConstructor();
+      return (T) ctor.newInstance();
+    } else {
+      Constructor<?> ctor = clazz.getConstructor(Object.class);
+      return (T) ctor.newInstance(messageArgument);
+    }
   }
 
   public int incrementNonce() {

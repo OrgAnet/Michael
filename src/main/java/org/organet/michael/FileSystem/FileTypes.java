@@ -6,7 +6,7 @@ import java.util.Map;
 public class FileTypes {
   private static Map<String, String> extensions = new HashMap<>();
 
-  static void initialize() {
+  static {
     extensions.put("aac", "Audio");
     extensions.put("flac", "Audio");
     extensions.put("m4a", "Audio");

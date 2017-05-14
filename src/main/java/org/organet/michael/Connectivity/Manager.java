@@ -92,7 +92,7 @@ public class Manager {
       return false;
     }
 
-    logger.info("Client connection established.");
+    logger.info("Client connection established on port {}.", nodeSocket.getPort());
 
     // NOTE Threads can be controlled if stored
     (new Thread(newNode)).start();
