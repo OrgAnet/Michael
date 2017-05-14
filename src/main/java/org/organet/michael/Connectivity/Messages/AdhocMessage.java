@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.organet.michael.App;
 import org.organet.michael.Helper;
+import org.organet.michael.Store.HasID;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
@@ -16,7 +17,7 @@ import java.util.Date;
 
 import static org.organet.michael.App.APP_PACKAGE;
 
-abstract public class AdhocMessage {
+abstract public class AdhocMessage implements HasID {
   public static String PART_SEPARATOR = "\t";
 
   private static final Logger logger = LogManager.getLogger(AdhocMessage.class.getName());
@@ -98,6 +99,10 @@ abstract public class AdhocMessage {
     sb.append(df.format(currentDate));
 
     return sb.toString();
+  }
+
+  public String getID() {
+    return messageID;
   }
 
   public MessageDomains getDomain() {

@@ -47,7 +47,7 @@ public abstract class ManagerBase {
       try {
         methodFound = true;
 
-        method.invoke(implementerInst, message.getArguments());
+        method.invoke(implementerInst, node, message);
 
         break;
       } catch (IllegalAccessException e) {

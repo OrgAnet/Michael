@@ -3,6 +3,8 @@ package org.organet.michael.Connectivity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.organet.michael.Connectivity.Messages.AdhocMessage;
+import org.organet.michael.Store.LRURepository;
+import org.organet.michael.Store.Repository;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -20,6 +22,7 @@ public class Manager {
 
   private Listener listener;
   private List<Node> nodes = new ArrayList<>();
+  private Repository<AdhocMessage> messages = new LRURepository<>();
 
   private Manager() {
     // This ctor is private and empty. The reason of these is to
@@ -85,7 +88,7 @@ public class Manager {
   boolean createAndAddNewNode(Socket nodeSocket) {
     Node newNode;
     try {
-      newNode = new Node(nodeSocket);
+      newNode = new Node(nodeSocket, messages);
     } catch (IOException e) {
       logger.warn("Could not create new Node.");
 

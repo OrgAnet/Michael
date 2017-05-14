@@ -1,6 +1,6 @@
 package org.organet.michael.Store;
 
-public interface Cache<T extends HasID> {
+public interface Repository<T extends HasID> {
   void setSize(int size); // 0 means no size limit
   void add(T item);
   T remove(int index);

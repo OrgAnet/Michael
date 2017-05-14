@@ -3,14 +3,17 @@ package org.organet.michael.Connectivity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.organet.michael.Connectivity.Messages.AdhocMessage;
-import org.organet.michael.Connectivity.Messages.MessageDomains;
 import org.organet.michael.Connectivity.Messages.NODE.*;
+import org.organet.michael.FileSystem.SharedFile;
+import org.organet.michael.Store.Repository;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.organet.michael.Connectivity.Messages.MessageDomains.NODE;
 
@@ -20,20 +23,22 @@ public class Node implements Runnable {
   private final Manager manager = Manager.getInstance();
 
   private Socket socket;
+  private final Repository<AdhocMessage> messages;
   private BufferedReader inlet;
   private OutputStream outlet;
-  private String outputBuffer = "";
+  private List<AdhocMessage> outletBuffer = new ArrayList<>(); // FIFO
   private String deviceID = null;
   private volatile boolean shutdown = false;
 
-  Node(Socket nodeSocket) throws IOException {
+  private FileInputStream fis = null;
+  private long fileSize = 0;
+
+  Node(Socket nodeSocket, Repository<AdhocMessage> messages) throws IOException {
     socket = nodeSocket;
-    socket.setSoTimeout(200); // TODO Doc here - timeout for introduce message reply
+    this.messages = messages;
+    socket.setSoTimeout(190); // TODO Doc here - timeout for introduce message reply
     inlet = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     outlet = socket.getOutputStream();
-
-    // Tell the new node to introduce itself
-    send(new IntroduceMessage());
   }
 
   @Override
@@ -52,16 +57,45 @@ public class Node implements Runnable {
       }
 
       // Check if anything to be sent
-      if (outputBuffer.length() > 0) {
+      if (outletBuffer.size() > 0) {
+        // Get next message and remove from the 'buffer'
+        AdhocMessage messageToSend = outletBuffer.remove(0);
+
         try {
-          outlet.write(String.valueOf(outputBuffer + "\n\r").getBytes());
+          outlet.write(String.valueOf(messageToSend + "\n\r").getBytes());
           outlet.flush();
+
+          // Critical section for `messages`
+          synchronized (messages) {
+            messages.add(messageToSend);
+          }
         } catch (IOException e) {
           logger.warn("Could not send the message to node.");
         }
+      } else if (fis != null) {
+        // Send the file
+        byte[] fileBytes = new byte[Math.toIntExact(fileSize)]; // FIXME Probably erroneous
+        BufferedInputStream bis = new BufferedInputStream(fis);
+        try {
+          bis.read(fileBytes, 0, fileBytes.length);
+        } catch (IOException e) {
+          e.printStackTrace(); // FIXME
 
-        // Also 'flush' the 'buffer'
-        outputBuffer = "";
+          return;
+        }
+
+        try {
+          outlet.write(fileBytes, 0, fileBytes.length);
+          outlet.flush();
+          fis.close();
+          fis = null; // This is important
+
+          logger.info("File sent.");
+        } catch (IOException e) {
+          e.printStackTrace(); // FIXME
+
+          return;
+        }
       }
 
       if (shutdown) {
@@ -127,12 +161,25 @@ public class Node implements Runnable {
     }
   }
 
-  public String getDeviceID() {
+  String getDeviceID() {
     return deviceID;
   }
 
-  private void send(AdhocMessage message) {
-    outputBuffer = message.toString();
+  public void send(AdhocMessage message) {
+    outletBuffer.add(message);
+  }
+
+  public void send(SharedFile sharedFile) {
+    try {
+      fis = new FileInputStream(sharedFile.getAbsolutePath());
+      fileSize = sharedFile.getSize();
+    } catch (FileNotFoundException e) {
+      e.printStackTrace(); // FIXME
+
+      return;
+    }
+
+    logger.info("Ready to send the file.");
   }
 
   void disconnect() {
