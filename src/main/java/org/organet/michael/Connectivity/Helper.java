@@ -3,6 +3,7 @@ package org.organet.michael.Connectivity;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.organet.michael.CommandLineInterface.*;
 
 import java.net.*;
 import java.util.*;
@@ -33,6 +34,21 @@ public class Helper {
   }
 
   private static NetworkInterface obtainAdhocInterface() {
+    String adhocInterfaceName = org.organet.michael.CommandLineInterface.Manager.getInstance().getAdhocInterfaceName();
+    NetworkInterface adhocInterface;
+    try {
+      adhocInterface = NetworkInterface.getByName(adhocInterfaceName);
+    } catch (SocketException e) {
+      logger.fatal("Could not get ad-hoc network interface. Terminating...");
+
+      System.exit(2);
+      return null;
+    }
+
+    return adhocInterface;
+  }
+
+  private static NetworkInterface obtainAdhocInterface_old() {
     Enumeration<NetworkInterface> interfaces;
     List<NetworkInterface> adhocInterfaceCandidates = new ArrayList<>();
 
@@ -215,6 +231,10 @@ public class Helper {
     } else {
       return ipAddress.toString().replaceAll("^/+", "");
     }
+  }
+
+  public static String getAdhocInterfaceName() {
+    return adhocInterface.getName();
   }
 
   public static String getMACAddress() {

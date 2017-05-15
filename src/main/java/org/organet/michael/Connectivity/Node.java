@@ -1,8 +1,11 @@
 package org.organet.michael.Connectivity;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.organet.michael.App;
 import org.organet.michael.Connectivity.Messages.AdhocMessage;
+import org.organet.michael.Connectivity.Messages.FILE_SYSTEM.GetMessage;
 import org.organet.michael.Connectivity.Messages.NODE.*;
 import org.organet.michael.FileSystem.SharedFile;
 import org.organet.michael.Store.Repository;
@@ -12,6 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +23,9 @@ import static org.organet.michael.Connectivity.Messages.MessageDomains.NODE;
 
 public class Node implements Runnable {
   private static final Logger logger = LogManager.getLogger(Node.class.getName());
+  private static final Level VERBOSE = Level.forName("VERBOSE", 550);
+
+  private static final int RECEIVE_BUFFER_SIZE = 1024; // bytes
 
   private final Manager manager = Manager.getInstance();
 
@@ -31,7 +38,10 @@ public class Node implements Runnable {
   private volatile boolean shutdown = false;
 
   private FileInputStream fis = null;
+  private FileOutputStream fos = null;
   private long fileSize = 0;
+  private String filename = "received_1k.bin"; // FIXME Do NOT hard-code this
+  private String filePath; // NOTE This will be calculated on-the-fly
 
   Node(Socket nodeSocket, Repository<AdhocMessage> messages) throws IOException {
     socket = nodeSocket;
@@ -39,6 +49,8 @@ public class Node implements Runnable {
     socket.setSoTimeout(190); // TODO Doc here - timeout for introduce message reply
     inlet = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     outlet = socket.getOutputStream();
+
+    filePath = Paths.get(App.getSharedDirectoryPath(), filename).toAbsolutePath().toString();
   }
 
   @Override
@@ -67,13 +79,15 @@ public class Node implements Runnable {
 
           // Critical section for `messages`
           synchronized (messages) {
-            messages.add(messageToSend);
+            messages.add(messageToSend); // TODO Add destination device id and ip maybe?
           }
         } catch (IOException e) {
           logger.warn("Could not send the message to node.");
         }
       } else if (fis != null) {
-        // Send the file
+        // Send a file
+        logger.log(VERBOSE, "Sending the file...");
+
         byte[] fileBytes = new byte[Math.toIntExact(fileSize)]; // FIXME Probably erroneous
         BufferedInputStream bis = new BufferedInputStream(fis);
         try {
@@ -96,6 +110,80 @@ public class Node implements Runnable {
 
           return;
         }
+      } else if (fos != null) {
+        // Receiving a file
+        logger.log(VERBOSE, "Receiving the file...");
+
+        InputStream sis;
+        try {
+          sis = socket.getInputStream();
+        } catch (IOException e) {
+          e.printStackTrace(); // FIXME
+
+          return;
+        }
+        byte[] fileBytes = new byte[RECEIVE_BUFFER_SIZE];
+        try {
+          fos = new FileOutputStream(filePath); // TODO Ask for the download location as local path
+          // TODO What if file already exists?
+        } catch (FileNotFoundException e) {
+          e.printStackTrace(); // FIXME
+
+          break;
+        }
+        BufferedOutputStream bos = new BufferedOutputStream(fos);
+        int bytesRead;
+        try {
+          bytesRead = sis.read(fileBytes, 0, RECEIVE_BUFFER_SIZE);
+        } catch (IOException e) {
+          e.printStackTrace(); // FIXME R34D
+
+          break;
+        }
+        int current = bytesRead;
+
+        while (current < fileSize) {
+          try {
+            bytesRead = sis.read(fileBytes, current, (RECEIVE_BUFFER_SIZE - current));
+          } catch (IOException e) {
+            e.printStackTrace(); // FIXME R34D
+
+            break;
+          }
+
+          if (bytesRead >= 0) {
+            current += bytesRead;
+          } else {
+            break; // receive finished
+          }
+        }
+        System.out.println("Info: File received.");
+
+        try {
+          bos.write(fileBytes, 0 , current);
+          bos.flush();
+        } catch (IOException e) {
+          e.printStackTrace(); // FIXME
+
+          break;
+        }
+
+        // TODO finally {...
+        try {
+          if (fos != null) {
+            fos.close();
+            fos = null;
+          }
+          if (bos != null) {
+            bos.close();
+          }
+        } catch (IOException e) {
+          e.printStackTrace(); // FIXME
+
+          break;
+        }
+
+        System.out.println("Info: File successfully received.");
       }
 
       if (shutdown) {
