@@ -22,6 +22,8 @@ public class Manager {
   // Singleton reference
   private static final Manager thisInst = new Manager();
 
+  private String adhocInterfaceName = null;
+
   // TODO This class will be used for invoking right commands and \
   //      parse their outputs properly under different environments \
   //      (i.e. different operating systems)
@@ -29,6 +31,8 @@ public class Manager {
   private Manager() {
     // This ctor is private and empty. The reason of these is to
     // hide/avoid the instantiation of this class except itself.
+
+    // WARN Do NOT `run` any CLI command here
   }
 
   public static Manager getInstance() {
@@ -123,14 +127,36 @@ public class Manager {
   }
 
   public String getAdhocInterfaceName() {
-    Object result = (new Iwconfig()).getResponse();
-    if (result == null) {
-      logger.fatal("Could not get ad-hoc network interface name. Terminating...");
+    if (adhocInterfaceName == null) {
+      Object response = (new Iwconfig()).getResponse();
+      if (response == null) {
+        logger.fatal("Could not get ad-hoc network interface name. Terminating...");
 
-      System.exit(1);
-      return null;
+        System.exit(1);
+        return null;
+      }
+
+      return String.valueOf(response);
+    } else {
+      return adhocInterfaceName;
     }
+  }
 
-    return String.valueOf(result);
+  public boolean activateAdhocMode() {
+    // TODO Use either `iw` or `iwconfig/iwlist/etc`
+
+    return false;
+  }
+
+  public boolean setESSID(String essid, int channel) {
+    // TODO Use either `iw` or `iwconfig/iwlist/etc`
+
+    return false;
+  }
+
+  public boolean enableNetworkInterface() {
+    // TODO Use either `iw` or `iwconfig/iwlist/etc`
+
+    return false;
   }
 }

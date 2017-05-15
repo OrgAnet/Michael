@@ -1,7 +1,5 @@
 package org.organet.michael.CommandLineInterface;
 
-import java.util.List;
-
 // NOTE This interface is exist so that `iw` or `iwconfig` commands/classes
 //      may be used by the application to achieve the same result depending
 //      on their shell command exists. So if `iw` shell command could not be
@@ -9,5 +7,4 @@ import java.util.List;
 //      for example `ScansForAdhocNetworks` interface will be used
 //      interchangeably.
 public interface ScansForAdhocNetworks {
-  List<AdhocNetwork> scanAdhocNetworks();
 }

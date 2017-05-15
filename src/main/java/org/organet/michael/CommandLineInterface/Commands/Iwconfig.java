@@ -52,7 +52,7 @@ public class Iwconfig extends CommandBase implements ReturnsResponse {
       return null;
     }
 
-    // Return meaningful result
+    // Return meaningful response
     return interfaceNamesThatSupportWirelessExtensions.get(0);
   }
 }

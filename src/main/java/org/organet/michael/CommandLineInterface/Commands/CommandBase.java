@@ -39,7 +39,7 @@ public abstract class CommandBase {
     this.reportExitStatus = reportExitStatus;
   }
 
-  public String run() {
+  String run() {
     return Manager.getInstance().runWithPrivileges(this);
   }
 }

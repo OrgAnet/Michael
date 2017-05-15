@@ -21,7 +21,7 @@ public class CheckNetworkManagerStatus extends CommandBase implements ReturnsRes
     // Parse the output
     result = result.split("Active: ")[1];
 
-    // Return meaningful result
+    // Return meaningful response
     return result.startsWith("active");
   }
 }

@@ -51,19 +51,38 @@ public class App {
 
     // Stop the NetworkManager service to avoid interference if it is started,
     // and also add the hook to start it again when the application exits.
-    Object result = (new CheckNetworkManagerStatus()).getResponse();
-    if (result == null || (boolean) result) {
+    Object response = (new CheckNetworkManagerStatus()).getResponse();
+    if (response == null || (boolean) response) {
       cliManager.runWithPrivileges(new StopNetworkManager());
       Runtime.getRuntime().addShutdownHook(new Thread(
         () -> cliManager.runWithPrivileges(new StartNetworkManager())
       ));
     }
 
-    String adhocInterfaceName = org.organet.michael.CommandLineInterface.Manager.getInstance().getAdhocInterfaceName();
-    (new IwActivateAdhocMode(adhocInterfaceName)).run();
-    (new IwSetESSID(adhocInterfaceName, "deneme", 1)).run();
+//    String adhocInterfaceName = cliManager.getAdhocInterfaceName();
+    if (!cliManager.activateAdhocMode()) {
+      logger.fatal("Could not activate ad-hoc mode on network interface. Terminating...");
+
+      System.exit(150);
+      return;
+    }
+//    (new IwActivateAdhocMode(adhocInterfaceName)).run();
+    if (!cliManager.setESSID("deneme", 1)) {
+      logger.fatal("Could not set ESSID on network interface. Terminating...");
+
+      System.exit(150);
+      return;
+    }
+//    (new IwSetESSID(adhocInterfaceName, "deneme", 1)).run();
+//    cliManager.setIPAddress("192.168.42.1");
 //    (new IpSetAddress(adhocInterfaceName, "192.168.42.1")).run(); // TODO Check if it is REALLY necessary
-    (new EnableNetworkInterface(adhocInterfaceName)).run();
+    if (!cliManager.enableNetworkInterface()) {
+      logger.fatal("Could not enable network interface. Terminating...");
+
+      System.exit(150);
+      return;
+    }
+//    (new EnableNetworkInterface(adhocInterfaceName)).run();
 
     connectivityManager = Manager.getInstance();
 
