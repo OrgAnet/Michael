@@ -3,8 +3,8 @@ package org.organet.michael.CommandLineInterface;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.organet.michael.CommandLineInterface.Commands.CommandBase;
-import org.organet.michael.CommandLineInterface.Commands.Iwconfig;
+import org.organet.michael.CommandLineInterface.Commands.*;
+import org.organet.michael.Connectivity.AdhocNetwork;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,6 +13,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class Manager {
   private static final Logger logger = LogManager.getLogger(Manager.class.getName());
@@ -37,10 +38,6 @@ public class Manager {
 
   public static Manager getInstance() {
     return thisInst;
-  }
-
-  private void checkForCommands() {
-    // TODO Run series of `iw`/`iwlist, iwconfig` commands to check for existence
   }
 
   public <C extends CommandBase> String runWithPrivileges(C command) {
@@ -136,27 +133,91 @@ public class Manager {
         return null;
       }
 
-      return String.valueOf(response);
-    } else {
-      return adhocInterfaceName;
+      adhocInterfaceName = String.valueOf(response);
+
+      logger.info("Ad-hoc network interface name obtained ({}).", adhocInterfaceName);
     }
+
+    return adhocInterfaceName;
   }
 
   public boolean activateAdhocMode() {
-    // TODO Use either `iw` or `iwconfig/iwlist/etc`
+    Object response = (new IwActivateAdhocMode(getAdhocInterfaceName())).getResponse();
+    if (response != null && ((boolean) response)) {
+      // OK, iw done it
+
+      return true;
+    }
+
+    response = (new IwconfigActivateAdhocMode(getAdhocInterfaceName())).getResponse();
+    if (response != null && ((boolean) response)) {
+      // OK iwconfig done it
+
+      return true;
+    }
 
     return false;
   }
 
   public boolean setESSID(String essid, int channel) {
-    // TODO Use either `iw` or `iwconfig/iwlist/etc`
+    Object response = (new IwSetESSID(getAdhocInterfaceName(), essid, channel)).getResponse();
+    if (response != null && ((boolean) response)) {
+      // OK, iw done it
+
+      return true;
+    }
+
+    // Set channel first and then ESSID
+    // "In Ad-Hoc mode, the frequency setting may only be used at initial cell creation, and may be ignored when joining
+    // an existing cell." @see https://linux.die.net/man/8/iwconfig
+    response = (new IwconfigSetChannel(getAdhocInterfaceName(), channel)).getResponse();
+    if (response != null && ((boolean) response)) {
+      // OK, iwconfig done it
+
+      response = (new IwconfigSetESSID(getAdhocInterfaceName(), essid)).getResponse();
+      if (response != null && ((boolean) response)) {
+        return true;
+      }
+
+      return false;
+    }
 
     return false;
   }
 
   public boolean enableNetworkInterface() {
-    // TODO Use either `iw` or `iwconfig/iwlist/etc`
+    Object response = (new EnableNetworkInterface(getAdhocInterfaceName())).getResponse();
+    if (response == null || (!(boolean) response)) {
+      return false;
+    }
 
-    return false;
+    return true;
+  }
+
+  public List<AdhocNetwork> getAdhocInterface() {
+    Object response = (new IwlistScan(getAdhocInterfaceName())).getResponse();
+    if (response == null) {
+      return null;
+    }
+
+    @SuppressWarnings("unchecked") List<Map<String, String>> networkInformations = (List<Map<String, String>>) response;
+    if (networkInformations.size() == 0) {
+      return null;
+    }
+
+    List<AdhocNetwork> networks = new ArrayList<>(networkInformations.size());
+//    for (Map<String, String> networkInformation : networkInformations) { // TODO
+//      networks.add(new AdhocNetwork(
+//        networkInformation.get("address"),
+//        networkInformation.get("address"),
+//        networkInformation.get("address"),
+//        networkInformation.get("address")
+//      ));
+//    }
+
+    // TODO Maybe introduce another strategy to pick and choose the right interface \
+    //      But nonetheless this will work most of the time (e.g. when there is only
+    //      one wireless device exists on the system.
+    return networks;
   }
 }

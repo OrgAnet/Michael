@@ -18,6 +18,10 @@ public class App {
   // Defines how much the message allowed to hop
   public static final int DEFAULT_MESSAGE_TTL = 3;
 
+  // Indicates ad-hoc network management will be handled by the application or not
+  // TODO Automate it via checking current network ESSID and mode
+  private static final boolean CONNECT_AUTOMATICALLY = false;
+
   private static final Logger logger = LogManager.getLogger(App.class.getName());
   private static final Level VERBOSE = Level.forName("VERBOSE", 550);
 
@@ -49,55 +53,61 @@ public class App {
     logger.info("Shared directory path is \"{}\".", sharedDirectory.getAbsolutePath());
 
 
-    // Stop the NetworkManager service to avoid interference if it is started,
-    // and also add the hook to start it again when the application exits.
-    Object response = (new CheckNetworkManagerStatus()).getResponse();
-    if (response == null || (boolean) response) {
-      cliManager.runWithPrivileges(new StopNetworkManager());
-      Runtime.getRuntime().addShutdownHook(new Thread(
-        () -> cliManager.runWithPrivileges(new StartNetworkManager())
-      ));
-    }
+    if (CONNECT_AUTOMATICALLY) {
+      // Stop the NetworkManager service to avoid interference if it is started,
+      // and also add the hook to start it again when the application exits.
+      Object response = (new CheckNetworkManagerStatus()).getResponse();
+      if (response == null || (boolean) response) {
+        cliManager.runWithPrivileges(new StopNetworkManager());
+        // TODO Do NOT bring up the interface back for now. If it is \
+        //      explicitly defined by the CLI arguments then bring up.
+        //      Runtime.getRuntime().addShutdownHook(new Thread(
+        //        () -> cliManager.runWithPrivileges(new StartNetworkManager())
+        //      ));
+      }
 
-//    String adhocInterfaceName = cliManager.getAdhocInterfaceName();
-    if (!cliManager.activateAdhocMode()) {
-      logger.fatal("Could not activate ad-hoc mode on network interface. Terminating...");
+      //    String adhocInterfaceName = cliManager.getAdhocInterfaceName();
+      if (!cliManager.activateAdhocMode()) {
+        logger.fatal("Could not activate ad-hoc mode on network interface. Terminating...");
 
-      System.exit(150);
-      return;
-    }
-//    (new IwActivateAdhocMode(adhocInterfaceName)).run();
-    if (!cliManager.setESSID("deneme", 1)) {
-      logger.fatal("Could not set ESSID on network interface. Terminating...");
+        System.exit(150);
+        return;
+      }
+      //    (new IwActivateAdhocMode(adhocInterfaceName)).run();
+      if (!cliManager.setESSID("deneme", 7)) {
+        logger.fatal("Could not set ESSID on network interface. Terminating...");
 
-      System.exit(150);
-      return;
-    }
-//    (new IwSetESSID(adhocInterfaceName, "deneme", 1)).run();
-//    cliManager.setIPAddress("192.168.42.1");
-//    (new IpSetAddress(adhocInterfaceName, "192.168.42.1")).run(); // TODO Check if it is REALLY necessary
-    if (!cliManager.enableNetworkInterface()) {
-      logger.fatal("Could not enable network interface. Terminating...");
+        System.exit(150);
+        return;
+      }
+      //    (new IwSetESSID(adhocInterfaceName, "deneme", 1)).run();
+      //    cliManager.setIPAddress("192.168.42.1");
+      //    (new IpSetAddress(adhocInterfaceName, "192.168.42.1")).run(); // TODO Check if it is REALLY necessary
+      if (!cliManager.enableNetworkInterface()) {
+        logger.fatal("Could not enable network interface. Terminating...");
 
-      System.exit(150);
-      return;
+        System.exit(150);
+        return;
+      }
+      //    (new EnableNetworkInterface(adhocInterfaceName)).run();
     }
-//    (new EnableNetworkInterface(adhocInterfaceName)).run();
 
     connectivityManager = Manager.getInstance();
 
 
-    deviceID = calculateDeviceID();
-    logger.log(VERBOSE, "Ad-hoc interface's; Name is \"{}\", MAC address is \"{}\", IP address is \"{}\" and broadcast address is \"{}\".",
-      Helper.getAdhocInterfaceName(), Helper.getMACAddress(), Helper.getIPAddress(), Helper.getBroadcastAddress());
+    deviceID = "tmp_dev_id";
+//    deviceID = calculateDeviceID();
+//    logger.log(VERBOSE, "Ad-hoc interface's; Name is \"{}\", MAC address is \"{}\" and IP address is \"{}\".",
+//      Helper.getAdhocInterfaceName(), Helper.getMACAddress(), Helper.getIPAddress());
 
 
-    fileSystemManager = org.organet.michael.FileSystem.Manager.getInstance();
-
-//    localStore = new ContentStore(true);
-
-    // Start watcher
-    fileSystemManager.start(sharedDirectory.getAbsolutePath());
+    // NOTE Disable FS Watcher for debugging purposes only
+//    fileSystemManager = org.organet.michael.FileSystem.Manager.getInstance();
+//
+////    localStore = new ContentStore(true);
+//
+//    // Start watcher
+//    fileSystemManager.start(sharedDirectory.getAbsolutePath());
   }
 
   private static String calculateDeviceID() {

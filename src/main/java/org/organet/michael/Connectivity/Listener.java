@@ -17,6 +17,8 @@ public class Listener implements Runnable {
 
   private final ServerSocket serverSocket;
 
+  // NOTE We SHOULD instantiate a new Listener after the ad-hoc network interface
+  //      bound to an IP address in the network.
   Listener(Manager manager) {
     this.manager = manager;
 

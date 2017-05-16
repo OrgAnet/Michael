@@ -21,6 +21,7 @@ public class Manager {
   private static final Manager thisInst = new Manager();
 
   private Listener listener;
+  private GroupListener groupListener;
   private List<Node> nodes = new ArrayList<>();
   private Repository<AdhocMessage> messages = new LRURepository<>();
 
@@ -28,7 +29,16 @@ public class Manager {
     // This ctor is private and empty. The reason of these is to
     // hide/avoid the instantiation of this class except itself.
 
-    listener = new Listener(this);
+    // FIXME Call this after IP address is obtained
+    //listener = new Listener(this);
+
+    try {
+      groupListener = new GroupListener(this);
+    } catch (IOException e) {
+      logger.fatal("Could not create group listener socket. Terminating...");
+
+      System.exit(40);
+    }
   }
 
   public static Manager getInstance() {

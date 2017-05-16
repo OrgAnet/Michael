@@ -1,10 +1,11 @@
 package org.organet.michael.CommandLineInterface.Commands;
 
+import org.organet.michael.CommandLineInterface.ActivatesAdhocMode;
 import org.organet.michael.CommandLineInterface.ReturnsResponse;
 
 import java.util.Arrays;
 
-public class IwActivateAdhocMode extends CommandBase implements ReturnsResponse {
+public class IwActivateAdhocMode extends CommandBase implements ActivatesAdhocMode, ReturnsResponse {
   public IwActivateAdhocMode(String adhocInterfaceName) {
     super("/sbin/iw", Arrays.asList(adhocInterfaceName, "set", "type", "ibss"));
   }
@@ -15,7 +16,9 @@ public class IwActivateAdhocMode extends CommandBase implements ReturnsResponse 
     Object response = this.run();
 
     // Parse the output
+    String responseString = String.valueOf(response);
+
     // Return meaningful response
-    return (!String.valueOf(response).startsWith("command failed"));
+    return (!responseString.startsWith("command failed:") && !responseString.startsWith("Usage:"));
   }
 }

@@ -1,4 +1,4 @@
-package org.organet.michael.CommandLineInterface;
+package org.organet.michael.Connectivity;
 
 public class AdhocNetwork {
   private String macAddress;
